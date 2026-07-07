@@ -1,28 +1,31 @@
 import requests
 import urllib3
 import os
-import time
 from core.colors import Colors
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 def check_directories(url: str) -> dict:
     if not url.startswith("http://") and not url.startswith("https://"):
-        url = "https://" + url  # Standard web infrastructure defaults ke liye
-            
+        url = "https://" + url
+        
     print(Colors.info(f"Scanning target application endpoint: {url}"))
     
+    # User se list poochenge
     wordlist_path = input(f"{Colors.YELLOW}[?] Enter Wordlist Path (or press Enter for Built-in list): ").strip()
+    
     directories = []
     
+    # UPGRADE: Agar user Enter dabaye, to computer se file dhoondne ke bajaye ye list load hogi
     if not wordlist_path:
         print(Colors.info("No file provided. Activating PenKit Built-in Web Discovery Wordlist..."))
-        # Targeted paths jo httpbin.org aur baqi standard servers par active hote hain
         directories = [
-            "html", "json", "xml", "status", "robots.txt", 
-            "ip", "user-agent", "headers", "cookies"
+            "admin", "login", "images", "uploads", "robots.txt", 
+            "assets", "css", "js", "api", "test", "dev", "backup", 
+            "config", "secure", "db", "v1", "v2", "status"
         ]
     else:
+        # Agar user ne path diya hai to file read karein
         if not os.path.exists(wordlist_path):
             print(Colors.fail(f"Error: Wordlist file not found at '{wordlist_path}'"))
             return {"Found_Directories": []}
@@ -34,37 +37,23 @@ def check_directories(url: str) -> dict:
             return {"Found_Directories": []}
 
     results = {"Found_Directories": []}
-    print(Colors.info(f"Loaded {len(directories)} components. Starting dynamic session verification...\n"))
+    print(Colors.info(f"Loaded {len(directories)} components. Starting rapid head checks...\n"))
     
-    session = requests.Session()
-    session.headers.update({
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
-    })
-    
-    # Handshake block handle karne ke liye timeout ko thoda flexible rakha hai
-    try:
-        session.get(url, timeout=5, verify=False)
-    except Exception as e:
-        print(Colors.fail(f"Initial baseline target handshake dropped: {e}"))
-
+    # Scan Engine Execution Loop
     for chunk in directories:
         test_url = url.rstrip("/") + "/" + chunk.lstrip("/")
         try:
-            response = session.get(test_url, timeout=5, verify=False, allow_redirects=True)
-            status = response.status_code
+            response = requests.head(test_url, timeout=3, verify=False)
             
-            if status in [200, 403]: 
-                print(f"  {Colors.GREEN}[+] Found: {test_url} (Status: {status})")
-                results["Found_Directories"].append({"url": test_url, "status": status})
-                
-            time.sleep(0.1) # Smooth processing loop delay
-                
+            # Agar folder mila (Status 200, 301, 302, 403 Forbidden)
+            if response.status_code in [200, 301, 302, 403]: 
+                print(f"  {Colors.GREEN}[+] Found: {test_url} (Status: {response.status_code})")
+                results["Found_Directories"].append({"url": test_url, "status": response.status_code})
         except requests.RequestException:
             pass
             
     if not results["Found_Directories"]:
-        print(Colors.fail("\nNo common components isolated via dynamic baseline checks."))
+        print(Colors.fail("\nNo common components isolated via rapid head checks."))
     else:
         print(Colors.success(f"\n[+] Brute-force finished. Identified {len(results['Found_Directories'])} targets!"))
         
