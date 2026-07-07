@@ -1,12 +1,13 @@
 import whois
 
-domain = "google.com"
+def run_whois(domain):
+    try:
+        info = whois.whois(domain)
 
-info = whois.whois(domain)
+        print(info.domain_name)
+        print(info.registrar)
+        print(info.creation_date)
+        print(info.expiration_date)
 
-print("Domain:", info.domain_name)
-print("Registrar:", info.registrar)
-print("Creation:", info.creation_date)
-print("Expiry:", info.expiration_date)
-print("Updated:", info.updated_date)
-print("Name Servers:", info.name_servers)
+    except Exception as e:
+        print(e)
