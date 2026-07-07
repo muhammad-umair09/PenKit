@@ -11,21 +11,17 @@ def check_directories(url: str) -> dict:
         
     print(Colors.info(f"Scanning target application endpoint: {url}"))
     
-    # User se list poochenge
     wordlist_path = input(f"{Colors.YELLOW}[?] Enter Wordlist Path (or press Enter for Built-in list): ").strip()
-    
     directories = []
     
-    # UPGRADE: Agar user Enter dabaye, to computer se file dhoondne ke bajaye ye list load hogi
     if not wordlist_path:
         print(Colors.info("No file provided. Activating PenKit Built-in Web Discovery Wordlist..."))
         directories = [
             "admin", "login", "images", "uploads", "robots.txt", 
             "assets", "css", "js", "api", "test", "dev", "backup", 
-            "config", "secure", "db", "v1", "v2", "status"
+            "config", "secure", "db", "status"
         ]
     else:
-        # Agar user ne path diya hai to file read karein
         if not os.path.exists(wordlist_path):
             print(Colors.fail(f"Error: Wordlist file not found at '{wordlist_path}'"))
             return {"Found_Directories": []}
@@ -37,23 +33,33 @@ def check_directories(url: str) -> dict:
             return {"Found_Directories": []}
 
     results = {"Found_Directories": []}
-    print(Colors.info(f"Loaded {len(directories)} components. Starting rapid head checks...\n"))
+    print(Colors.info(f"Loaded {len(directories)} components. Starting smart scanning...\n"))
     
-    # Scan Engine Execution Loop
+    # Custom User-Agent taaki server request block na kare
+    headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) PenKit/2.0'}
+    
     for chunk in directories:
         test_url = url.rstrip("/") + "/" + chunk.lstrip("/")
         try:
-            response = requests.head(test_url, timeout=3, verify=False)
+            # Step 1: Pehle HEAD check try karo fast speed ke liye
+            response = requests.head(test_url, timeout=4, headers=headers, verify=False, allow_redirects=False)
+            status = response.status_code
             
-            # Agar folder mila (Status 200, 301, 302, 403 Forbidden)
-            if response.status_code in [200, 301, 302, 403]: 
-                print(f"  {Colors.GREEN}[+] Found: {test_url} (Status: {response.status_code})")
-                results["Found_Directories"].append({"url": test_url, "status": response.status_code})
+            # Step 2: UPGRADE - Agar server HEAD ko support nahi karta (405/500/400), to GET chalao
+            if status in [405, 500, 400, 404] and status != 404:
+                response = requests.get(test_url, timeout=4, headers=headers, verify=False, allow_redirects=False)
+                status = response.status_code
+            
+            # Agar valid directory mili
+            if status in [200, 301, 302, 403]: 
+                print(f"  {Colors.GREEN}[+] Found: {test_url} (Status: {status})")
+                results["Found_Directories"].append({"url": test_url, "status": status})
+                
         except requests.RequestException:
             pass
             
     if not results["Found_Directories"]:
-        print(Colors.fail("\nNo common components isolated via rapid head checks."))
+        print(Colors.fail("\nNo common components isolated via smart checks."))
     else:
         print(Colors.success(f"\n[+] Brute-force finished. Identified {len(results['Found_Directories'])} targets!"))
         
