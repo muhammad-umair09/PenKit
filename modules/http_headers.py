@@ -1,5 +1,9 @@
 import requests
+import urllib3
 from core.colors import Colors
+
+# SSL/TLS warnings ko screen se gayab karne ke liye
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 def analyze_http_headers(url: str) -> dict:
     if not url.startswith("http://") and not url.startswith("https://"):
@@ -16,8 +20,10 @@ def analyze_http_headers(url: str) -> dict:
         results["Cache-Control"] = hdrs.get("Cache-Control", "Not Configured")
         results["Set-Cookie"] = "Present" if "Set-Cookie" in hdrs else "Absent"
         
+        # Yahan fix kiya gaya hai: Colors.WHITE ko sahi tareeqe se format kiya hai
         for k, v in results.items():
-            print(Colors.white(f"  {k}: {v}"))
+            print(f"  {Colors.WHITE}{k}: {v}")
+            
     except Exception as e:
         results["Error"] = str(e)
         print(Colors.fail(f"Server response extraction disrupted: {e}"))
