@@ -1,20 +1,32 @@
 import hashlib
 from core.colors import Colors
 
-def generate_hashes(data_string: str) -> dict:
+def generate_hashes(text: str) -> dict:
+    # Agar user ne input khali choda ho
+    if not text:
+        text = input("Enter payload data string to convert: ").strip()
+        if not text:
+            print(Colors.fail("Error: No data string provided for processing."))
+            return {}
+
     print(Colors.info("Computing cryptographic digests across multi-algorithm arrays..."))
-    b_data = data_string.encode('utf-8')
     
-    results = {
-        "Input String": data_string,
-        "MD5": hashlib.md5(b_data).hexdigest(),
-        "SHA1": hashlib.sha1(b_data).hexdigest(),
-        "SHA256": hashlib.sha256(b_data).hexdigest(),
-        "SHA512": hashlib.sha512(b_data).hexdigest()
-    }
-    
-    for k, v in results.items():
-        if k != "Input String":
-            print(Colors.white(f"  {k}: {v}"))
-            
+    results = {}
+    try:
+        # Standard cryptographic algorithms computation
+        results["MD5"] = hashlib.md5(text.encode()).hexdigest()
+        results["SHA-1"] = hashlib.sha1(text.encode()).hexdigest()
+        results["SHA-256"] = hashlib.sha256(text.encode()).hexdigest()
+        results["SHA-512"] = hashlib.sha512(text.encode()).hexdigest()
+        
+        # Output printing loop - 'Colors.white' ki jagah standard interpolation use ki hai
+        print(f"\n{Colors.GREEN}[+] Cryptographic Generation Matrix Finished:")
+        print(f"  [-] MD5    : {results['MD5']}")
+        print(f"  [-] SHA-1  : {results['SHA-1']}")
+        print(f"  [-] SHA-256: {results['SHA-256']}")
+        print(f"  [-] SHA-512: {results['SHA-512']}\n")
+        
+    except Exception as e:
+        print(Colors.fail(f"Execution handling failure: {e}"))
+        
     return results
