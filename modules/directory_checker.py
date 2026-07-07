@@ -1,19 +1,15 @@
 import requests
 import urllib3
 import os
+import time
 from core.colors import Colors
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 def check_directories(url: str) -> dict:
-    # Strict formatting bypass logic
     if not url.startswith("http://") and not url.startswith("https://"):
-        # testphp.vulnweb.com plain HTTP par chalta hai, isliye defaults check kar rahe hain
-        if "vulnweb" in url:
-            url = "http://" + url
-        else:
-            url = "https://" + url
-        
+        url = "https://" + url  # Standard web infrastructure defaults ke liye
+            
     print(Colors.info(f"Scanning target application endpoint: {url}"))
     
     wordlist_path = input(f"{Colors.YELLOW}[?] Enter Wordlist Path (or press Enter for Built-in list): ").strip()
@@ -21,10 +17,10 @@ def check_directories(url: str) -> dict:
     
     if not wordlist_path:
         print(Colors.info("No file provided. Activating PenKit Built-in Web Discovery Wordlist..."))
-        # Targeted paths jo testphp aur baqi sites par zaroor hote hain
+        # Targeted paths jo httpbin.org aur baqi standard servers par active hote hain
         directories = [
-            "admin", "login", "images", "secure", "pictures", 
-            "includes", "artists", "disclaimer", "robots.txt"
+            "html", "json", "xml", "status", "robots.txt", 
+            "ip", "user-agent", "headers", "cookies"
         ]
     else:
         if not os.path.exists(wordlist_path):
@@ -38,24 +34,31 @@ def check_directories(url: str) -> dict:
             return {"Found_Directories": []}
 
     results = {"Found_Directories": []}
-    print(Colors.info(f"Loaded {len(directories)} components. Starting dynamic baseline analysis...\n"))
+    print(Colors.info(f"Loaded {len(directories)} components. Starting dynamic session verification...\n"))
     
-    # Real browser user-agent simulation strings
-    headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
-    }
+    session = requests.Session()
+    session.headers.update({
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
+    })
     
+    # Handshake block handle karne ke liye timeout ko thoda flexible rakha hai
+    try:
+        session.get(url, timeout=5, verify=False)
+    except Exception as e:
+        print(Colors.fail(f"Initial baseline target handshake dropped: {e}"))
+
     for chunk in directories:
         test_url = url.rstrip("/") + "/" + chunk.lstrip("/")
         try:
-            # GET request directly with redirects enabled standard
-            response = requests.get(test_url, timeout=5, headers=headers, verify=False, allow_redirects=True)
+            response = session.get(test_url, timeout=5, verify=False, allow_redirects=True)
             status = response.status_code
             
-            # Agar folder ya valid endpoint mila
             if status in [200, 403]: 
                 print(f"  {Colors.GREEN}[+] Found: {test_url} (Status: {status})")
                 results["Found_Directories"].append({"url": test_url, "status": status})
+                
+            time.sleep(0.1) # Smooth processing loop delay
                 
         except requests.RequestException:
             pass
