@@ -65,18 +65,7 @@ This project follows clean code conventions, structured error validation, strict
 │ 3. Banner Grabber                           │
 ...
 └─────────────────────────────────────────────┘
-
 ```
-
-*(Placeholder: Add your customized main menu and execution terminal output screenshot here)*
-
----
-
-## 🎥 Demo
-
-Watch PenKit in action executing multi-threaded port scans and compiling dynamic PDF metrics reports:
-
-* [PenKit Walkthrough Demonstration Placeholder Link](https://www.google.com/search?q=%23)
 
 ---
 
@@ -130,8 +119,8 @@ PenKit implements a highly organized, decoupled architecture dividing runtime va
 ### Clone Repository
 
 ```bash
-git clone https://github.com/muhammad-umair09/PenKit.git
-cd PenKit
+git clone https://github.com/muhammad-umair09/penkit.git
+cd penkit
 
 ```
 
@@ -315,5 +304,3 @@ Contributions are welcome. Please read the following steps to maintain clean cod
 ### Code Style Guidelines
 
 Ensure modifications comply entirely with standard **PEP 8** coding standards, utilize explicit type hints on signatures, and feature docstrings for all exposed methods.
-#   p e n k i t  
- 
