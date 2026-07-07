@@ -15,7 +15,7 @@ from core.validator import Validator
 from modules.host_discovery import discover_host
 from modules.port_scanner import run_port_scanner
 from modules.banner_grabber import grab_banner
-from modules.dns_lookup import dns_query
+from modules.dns_lookup import dns_lookup
 from modules.whois_lookup import run_whois
 from modules.subdomain_enum import enumerate_subdomains
 from modules.http_headers import analyze_http_headers
@@ -107,7 +107,7 @@ def main():
             elif choice == "4":
                 target = input("Enter target domain: ").strip()
                 if Validator.is_valid_domain(target):
-                    res = dns_query(target)
+                    res = dns_lookup(target)
                     ask_report_export("dns_lookup", target, res)
                 else:
                     print(Colors.fail("Domain validation dropped input structure."))
